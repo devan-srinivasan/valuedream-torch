@@ -38,16 +38,16 @@ class Trainer(object):
         self._optim_initialize(config)
 
     def collect_seed_episodes(self, env):
-        s, done  = env.reset(), False 
+        s, done  = np.transpose(env.reset(), (2,0,1)), False 
         for i in range(self.seed_steps):
             a = env.action_space.sample()
             ns, r, done, _ = env.step(a)
             if done:
                 self.buffer.add(s,a,r,done)
-                s, done  = env.reset(), False 
+                s, done  = np.transpose(env.reset(), (2,0,1)), False 
             else:
                 self.buffer.add(s,a,r,done)
-                s = ns    
+                s = np.transpose(ns, (2,0,1))    
 
     def train_batch(self, train_metrics):
         """ 
@@ -299,6 +299,7 @@ class Trainer(object):
         if config.discount['use']:
             self.DiscountModel = DenseModel((1,), modelstate_size, config.discount).to(self.device)
         if config.pixel:
+            from pdb import set_trace
             self.ObsEncoder = ObsEncoder(obs_shape, embedding_size, config.obs_encoder).to(self.device)
             self.ObsDecoder = ObsDecoder(obs_shape, modelstate_size, config.obs_decoder).to(self.device)
         else:

@@ -36,7 +36,8 @@ class TransitionBuffer():
         reward: float,
         done: bool,
     ):
-        self.observation[self.idx] = obs
+        from pdb import set_trace
+        self.observation[self.idx] = obs #np.transpose(obs, (2,0,1))
         self.action[self.idx] = action 
         self.reward[self.idx] = reward
         self.terminal[self.idx] = done

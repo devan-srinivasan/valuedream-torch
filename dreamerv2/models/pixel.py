@@ -31,6 +31,7 @@ class ObsEncoder(nn.Module):
             self.fc_1 = nn.Linear(self.embed_size, embedding_size)
 
     def forward(self, obs):
+        from pdb import set_trace
         batch_shape = obs.shape[:-3]
         img_shape = obs.shape[-3:]
         embed = self.convolutions(obs.reshape(-1, *img_shape))
@@ -40,7 +41,7 @@ class ObsEncoder(nn.Module):
 
     @property
     def embed_size(self):
-        conv1_shape = conv_out_shape(self.shape[0:2], 0, self.k, 1)
+        conv1_shape = conv_out_shape(self.shape[1:], 0, self.k, 1)
         conv2_shape = conv_out_shape(conv1_shape, 0, self.k, 1)
         conv3_shape = conv_out_shape(conv2_shape, 0, self.k, 1)
         embed_size = int(4*self.d*np.prod(conv3_shape).item())
@@ -57,7 +58,7 @@ class ObsDecoder(nn.Module):
         activation = info['activation']
         d = info['depth']
         k  = info['kernel']
-        conv1_shape = conv_out_shape(output_shape[0:2], 0, k, 1)
+        conv1_shape = conv_out_shape(output_shape[1:], 0, k, 1)
         conv2_shape = conv_out_shape(conv1_shape, 0, k, 1)
         conv3_shape = conv_out_shape(conv2_shape, 0, k, 1)
         self.conv_shape = (4*d, *conv3_shape)

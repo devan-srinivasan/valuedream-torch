@@ -13,6 +13,7 @@ from dreamerv2.training.trainer import Trainer
 from dreamerv2.training.evaluator import Evaluator
 
 import crafter
+import pdb
 
 # from gym import envs
 # all_envs = envs.registry.all()
@@ -43,7 +44,7 @@ def main(args):
     # action_size = env.action_space.shape[0]
     action_size = (env.action_space.n)
 
-    config = CrafterConfig(env='CrafterReward-v1', obs_shape=(64,64,3), action_size=action_size)
+    config = CrafterConfig(env='CrafterReward-v1', obs_shape=(3,64,64), action_size=action_size)
 
     config_dict = config.__dict__
     trainer = Trainer(config, device)
@@ -54,7 +55,7 @@ def main(args):
         print('...training...')
         train_metrics = {}
         trainer.collect_seed_episodes(env)
-        obs, score = env.reset(), 0
+        obs, score = np.transpose(env.reset(), (2,0,1)), 0
         done = False
         prev_rssmstate = trainer.RSSM._init_rssm_state(1)
         prev_action = torch.zeros(1, trainer.action_size).to(trainer.device)
@@ -63,7 +64,7 @@ def main(args):
         best_mean_score = 0
         train_episodes = 0
         best_save_path = os.path.join(model_dir, 'models_best.pth')
-        for iter in range(1, trainer.config.train_steps):  
+        for iter in range(1, int(trainer.config.train_steps)):
             if iter%trainer.config.train_every == 0:
                 train_metrics = trainer.train_batch(train_metrics)
             if iter%trainer.config.slow_target_update == 0:
@@ -79,12 +80,13 @@ def main(args):
                 action_ent = torch.mean(action_dist.entropy()).item()
                 episode_actor_ent.append(action_ent)
 
-            next_obs, rew, done, _ = env.step(action.squeeze(0).cpu().numpy())
+            next_obs, rew, done, _ = env.step(action.squeeze(0).cpu().numpy().round().argmax())
+            next_obs = np.transpose(next_obs, (2,0,1))
             score += rew
 
             if done:
                 train_episodes += 1
-                trainer.buffer.add(obs, action.squeeze(0).cpu().numpy(), rew, done)
+                trainer.buffer.add(obs, action.squeeze(0).cpu().numpy().round().argmax(), rew, done)
                 train_metrics['train_rewards'] = score
                 train_metrics['action_ent'] =  np.mean(episode_actor_ent)
                 train_metrics['train_steps'] = iter
@@ -99,13 +101,13 @@ def main(args):
                         save_dict = trainer.get_save_dict()
                         torch.save(save_dict, best_save_path)
                 
-                obs, score = env.reset(), 0
+                obs, score = np.transpose(env.reset(), (2,0,1)), 0
                 done = False
                 prev_rssmstate = trainer.RSSM._init_rssm_state(1)
                 prev_action = torch.zeros(1, trainer.action_size).to(trainer.device)
                 episode_actor_ent = []
             else:
-                trainer.buffer.add(obs, action.squeeze(0).detach().cpu().numpy(), rew, done)
+                trainer.buffer.add(obs, action.squeeze(0).detach().cpu().numpy().round().argmax(), rew, done)
                 obs = next_obs
                 prev_rssmstate = posterior_rssm_state
                 prev_action = action

@@ -134,18 +134,18 @@ class CrafterConfig():
     env : str                                           
     obs_shape: Tuple                                            
     action_size: int
-    seed_steps : int = int(1e5)
+    seed_steps : int = 100 #1e5
     pixel: bool = True
     action_repeat: int = 1
     time_limit: int = 0
     
     #buffer desc
-    capacity: int = int(1e6)
+    capacity: int = int(1e3)
     obs_dtype: np.dtype = np.uint8
     action_dtype: np.dtype = np.float32
 
     #training desc
-    train_steps: int = 1
+    train_steps: int = 1e6
     train_every: int = 10
     collect_intervals: int = 5      # dne
     batch_size: int = 50
